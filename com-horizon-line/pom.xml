@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.spring</groupId>
+        <artifactId>com-base-line</artifactId>
+        <relativePath/>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.horizon</groupId>
+    <artifactId>com-horizon-line</artifactId>
+    <version>${revision}${changelist}</version>
+    <packaging>pom</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <buildDate>${maven.build.timestamp}</buildDate>
+        <chartName>${project.artifactId}</chartName>
+        <chartVersion>${project.version}</chartVersion>
+        <chartDir>${project.basedir}/target/chart/${chartName}</chartDir>
+        <helm.revision>v3.9.3-E001</helm.revision>
+        <helm.dev.arm.repo></helm.dev.arm.repo>
+        <helm.release.arm.repo></helm.release.arm.repo>
+        <helm.arm.repo>${helm.dev.arm.repo}</helm.arm.repo>
+        <helm.download.url></helm.download.url>
+        <helm.upload.repo>${helm.arm.repo}-local/${chartName}</helm.upload.repo>
+        <maven.exec.skip>false</maven.exec.skip>
+        <arm.instance></arm.instance>
+        <docker.image.name>${project.artifactId}</docker.image.name>
+        <docker.image.project>registry</docker.image.project>
+        <dev.namespace>dev</dev.namespace>
+        <release.namespace>release</release.namespace>
+        <xray.namespace>xray</xray.namespace>
+        <docker.image.namespace>${docker.image.project}/${dev.namespace}</docker.image.namespace>
+        <docker.image.xray.namespace>${docker.image.project}/${xray.namespace}</docker.image.xray.namespace>
+        <docker.image.release.namespace>${docker.image.project}/${release.namespace}</docker.image.release.namespace>
+        <product.main.number></product.main.number>
+        <productNumber>${product.main.number}</productNumber>  <!-- To align with current definition in Dockerfile-->
+        <fabric8.plugin.version>0.37.0</fabric8.plugin.version>
+        <dockerfile.dir>${project.build.directory}/docker-build</dockerfile.dir>
+        <!--        <docker.image.tag>${project.version}-${timestamp}-${buildNumber}</docker.image.tag>-->
+        <docker.image.tag>${project.version}-${timestamp}</docker.image.tag>
+        <adp.base.extension.name>adp-base-extension</adp.base.extension.name>
+        <adp.base.jdk.name>adp-base-openjdk8</adp.base.jdk.name>
+        <adp.base.jdk11.name>adp-base-openjdk11</adp.base.jdk11.name>
+        <adp.base.python.name>adp-base-python3</adp.base.python.name>
+        <adp.base.jetty.name>adp-base-jetty-jdk8</adp.base.jetty.name>
+        <adp.base.jdk11.jetty.name>adp-base-jetty-jdk11</adp.base.jdk11.jetty.name>
+        <adp.base.nodejs.name>adp-base-nodejs</adp.base.nodejs.name>
+        <base.revision>${revision}${changelist}</base.revision>
+        <adp.base.extension.revision>${base.revision}</adp.base.extension.revision>
+        <adp.base.jdk.revision>${base.revision}</adp.base.jdk.revision>
+        <adp.base.jdk11.revision>${base.revision}</adp.base.jdk11.revision>
+        <adp.base.python.revision>${base.revision}</adp.base.python.revision>
+        <adp.base.jetty.revision>${base.revision}</adp.base.jetty.revision>
+        <adp.base.jdk11.jetty.revision>${base.revision}</adp.base.jdk11.jetty.revision>
+        <adp.base.nodejs.revision>${base.revision}</adp.base.nodejs.revision>
+        <init.image.name>com-common-toolkit</init.image.name>
+        <init.image.revision>${base.revision}</init.image.revision>
+        <common.os.revision>5.13.0-14</common.os.revision>
+        <stdout-redirect.version>1.23.0</stdout-redirect.version>
+        <download-maven-plugin.version>1.6.8</download-maven-plugin.version>
+        <nodejs.revision>v12.20.1</nodejs.revision>
+        <docker.start.cmd>cat</docker.start.cmd>
+        <docker.wait.log></docker.wait.log>
+        <docker.verbose>true</docker.verbose>
+        <imagePullPolicy>Always</imagePullPolicy>
+        <helm-maven-plugin.groupId>io.kokuwa.maven</helm-maven-plugin.groupId>
+        <helm-maven-plugin.version>6.0.0</helm-maven-plugin.version>
+    </properties>
+
+    <scm>
+        <connection></connection>
+        <developerConnection></developerConnection>
+        <url></url>
+    </scm>
+
+    <profiles>
+        <profile>
+            <id>sef</id>
+            <activation>
+                <property>
+                    <name>sef.activate</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <maven.sero.arm></maven.sero.arm>
+                <helm.dev.arm.repo></helm.dev.arm.repo>
+                <helm.release.arm.repo></helm.release.arm.repo>
+                <helm.arm.repo>${helm.dev.arm.repo}</helm.arm.repo>
+                <docker.image.namespace></docker.image.namespace>
+                <docker.image.release.namespace></docker.image.release.namespace>
+            </properties>
+        </profile>
+        <profile>
+            <id>release</id>
+            <properties>
+                <helm.arm.repo>${helm.release.arm.repo}</helm.arm.repo>
+                <docker.image.tag>${project.version}</docker.image.tag>
+                <docker.image.namespace>${docker.image.release.namespace}</docker.image.namespace>
+                <imagePullPolicy>IfNotPresent</imagePullPolicy>
+            </properties>
+        </profile>
+        <profile>
+            <id>windows.helm</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <helm.download.url>
+                </helm.download.url>
+            </properties>
+        </profile>
+        <profile>
+            <id>helm-ut</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src/test/java/</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <targetPath>${dockerfile.dir}</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/docker</directory>
+                <targetPath>${dockerfile.dir}</targetPath>
+                <filtering>true</filtering>
+                <includes>
+                    <include>*Dockerfile*</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/docker</directory>
+                <targetPath>${dockerfile.dir}</targetPath>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>*Dockerfile*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/bin</directory>
+                <targetPath>${dockerfile.dir}</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/info</directory>
+                <targetPath>${dockerfile.dir}</targetPath>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/helm</directory>
+                <targetPath>${chartDir}</targetPath>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.yaml</include>
+                    <include>**/*.tpl</include>
+                    <include>**/*.txt</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/helm</directory>
+                <targetPath>${chartDir}</targetPath>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/*.yaml</exclude>
+                    <exclude>**/*.tpl</exclude>
+                    <exclude>**/*.txt</exclude>
+                </excludes>
+            </resource>
+        </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>1.4</version>
+                    <executions>
+                        <execution>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>create</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <shortRevisionLength>4</shortRevisionLength>
+                        <timestampFormat>{0,date,yyMMddHHmm}</timestampFormat>
+                        <items>
+                            <item>buildNumber</item>
+                            <item>timestamp</item>
+                        </items>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>com.googlecode.maven-download-plugin</groupId>
+                    <artifactId>download-maven-plugin</artifactId>
+                    <version>${download-maven-plugin.version}</version>
+                    <!--                    <executions>-->
+                    <!--                        <execution>-->
+                    <!--                            <id>download-cbo-hardening</id>-->
+                    <!--                            <phase>process-resources</phase>-->
+                    <!--                            <goals>-->
+                    <!--                                <goal>wget</goal>-->
+                    <!--                            </goals>-->
+                    <!--                            <configuration>-->
+                    <!--                                <url>${cbo_hardening_repo}/${cbo_hardening_archive}</url>-->
+                    <!--                                <outputDirectory>${project.build.directory}/docker-build</outputDirectory>-->
+                    <!--                                <username>${env.username}</username>-->
+                    <!--                                <password>${env.passwd}</password>-->
+                    <!--                            </configuration>-->
+                    <!--                        </execution>-->
+                    <!--                    </executions>-->
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>resources</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <useDefaultDelimiters>false</useDefaultDelimiters>
+                        <overwrite>true</overwrite>
+                        <delimiters>
+                            <delimiter>@*@</delimiter>
+                        </delimiters>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>${helm-maven-plugin.groupId}</groupId>
+                    <artifactId>helm-maven-plugin</artifactId>
+                    <version>${helm-maven-plugin.version}</version>
+                    <extensions>true</extensions>
+                    <executions>
+                        <execution>
+                            <id>helm-init</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>init</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>helm-lint</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>lint</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>helm-dependency-build</id>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>dependency-build</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>helm-package</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>helm-upload</id>
+                            <phase>deploy</phase>
+                            <goals>
+                                <goal>upload</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <chartDirectory>${chartDir}</chartDirectory>
+                        <chartVersion>${chartVersion}</chartVersion>
+                        <!--                        <uploadRepoStable>-->
+                        <!--                            <name>helm-repo</name>-->
+                        <!--                            <url>${helm.upload.repo}</url>-->
+                        <!--                            <type>ARTIFACTORY</type>-->
+                        <!--                        </uploadRepoStable>-->
+                        <!--                        <helmExtraRepos>-->
+                        <!--                            <helmRepo>-->
+                        <!--                                <name>helm-repo</name>-->
+                        <!--                                <url>${helm.release.arm.repo}</url>-->
+                        <!--                            </helmRepo>-->
+                        <!--                        </helmExtraRepos>-->
+                        <!--                        <helmDownloadUrl>${helm.download.url}</helmDownloadUrl>-->
+                        <!--                        <helmHomeDirectory>${project.basedir}/target/home/helm</helmHomeDirectory>-->
+                        <!--                        <repositoryCache>${project.build.directory}/home/helm/repository</repositoryCache>-->
+                        <!--                        <repositoryConfig>${project.build.directory}/home/helm/repository/repositories.yaml-->
+                        <!--                        </repositoryConfig>-->
+                        <!--                        <outputDirectory>${project.build.directory}/helm/package</outputDirectory>-->
+                        <!--                        <skipRefresh>true</skipRefresh>-->
+                        <!--                        <addDefaultRepo>false</addDefaultRepo>-->
+                        <useLocalHelmBinary>true</useLocalHelmBinary>
+                        <autoDetectLocalHelmBinary>false</autoDetectLocalHelmBinary>
+                        <helmExecutableDirectory>/usr/local/bin</helmExecutableDirectory>
+                        <repositoryCache>${project.build.directory}/home/helm/repository</repositoryCache>
+                        <repositoryConfig>${project.build.directory}/home/helm/repository/repositories.yaml
+                        </repositoryConfig>
+                        <outputDirectory>${project.build.directory}/helm/package</outputDirectory>
+                        <addDefaultRepo>false</addDefaultRepo>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${fabric8.plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>docker-remove</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>remove</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>docker-build</id>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>build</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>docker-start</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>start</goal>
+                            </goals>
+                            <configuration>
+                                <autoPull>once</autoPull> <!--Start local images for verifying.-->
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>docker-stop</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>stop</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>docker-push</id>
+                            <phase>deploy</phase>
+                            <goals>
+                                <goal>push</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <images>
+                            <!--                            <image>-->
+                            <!--                                <name>${docker.image.xray.namespace}/${docker.image.name}</name>-->
+                            <!--                                <build>-->
+                            <!--                                    <tags>-->
+                            <!--                                        <tag>${project.version}</tag>-->
+                            <!--                                    </tags>-->
+                            <!--                                    <dockerFileDir>${dockerfile.dir}</dockerFileDir>-->
+                            <!--                                    <filter>false</filter>-->
+                            <!--                                </build>-->
+                            <!--                            </image>-->
+                            <image>
+                                <name>${docker.image.namespace}/${docker.image.name}</name>
+                                <build>
+                                    <tags>
+                                        <!--                                        <tag>latest</tag>-->
+                                        <tag>${project.version}</tag>
+                                        <!--                                        <tag>${docker.image.tag}</tag>-->
+                                    </tags>
+                                    <dockerFileDir>${dockerfile.dir}</dockerFileDir>
+                                    <filter>false</filter>
+                                </build>
+                                <run>
+                                    <cmd>${docker.start.cmd}</cmd>
+                                    <wait>
+                                        <log>${docker.wait.log}</log>
+                                    </wait>
+                                </run>
+                            </image>
+                        </images>
+                        <autoPull>off</autoPull>
+                        <containerNamePattern>%e</containerNamePattern>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <stripVersion>true</stripVersion>
+                        <outputDirectory>${dockerfile.dir}</outputDirectory>
+                        <excludeTransitive>true</excludeTransitive>
+                        <overWriteReleases>true</overWriteReleases>
+                        <overWriteSnapshots>true</overWriteSnapshots>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shortRevisionLength>4</shortRevisionLength>
+                    <timestampFormat>{0,date,yyMMddHHmm}</timestampFormat>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.5.0</version>
+                                    <!-- required by maven flatten plugin-->
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/helm.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

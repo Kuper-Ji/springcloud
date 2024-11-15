@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "com-common-library.name" . }}
+  labels:
+  {{- include "com-common-library.standardLabels" (list $) | nindent 4 }}
+  {{- include "com-common-library.labels" (list $) | nindent 4 }}
+  annotations:
+  {{- include "com-common-library.productInformation" (list $) | nindent 4 }}
+  {{- include "com-common-library.annotations" (list $) | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  {{- include "com-common-library.updateStrategy" $ | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "com-common-library.matchLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "com-common-library.standardLabels" (list $) | nindent 8 }}
+      annotations:
+        {{- include "com-common-library.productInformation" (list $) | nindent 8 }}
+        {{- include "com-common-library.annotations" (list $) | nindent 8 }}
+    spec:
+      # DR-D1123-120, ADP Services Shall Define Service Account.
+      serviceAccountName: {{ include "com-common-library.name" . }}
+      automountServiceAccountToken: true
+      {{- include "com-common-library.tolerations" . | nindent 6 -}}
+      {{- include "com-common-library.nodeSelector" . | nindent 6 -}}
+      {{- include "com-common-library.affinity" $ | nindent 6 }}
+      {{- include "com-common-library.pullSecret" . | nindent 6 }}
+      {{- include "com-common-library.terminationGracePeriodSeconds" (list $) | nindent 6 }}
+      containers:
+        - name: {{ include "com-common-library.name" . }}
+          imagePullPolicy: {{ include "com-common-library.registry.imagePullPolicy" (list $ "gateway" "@docker.image.namespace@") }}
+          image: registry/dev/com-springcloud-gateway:1.0.0-SNAPSHOT
+          {{- include "com-common-library.containerSecurityContext" . | nindent 10 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "/bin/bash", "-c", "sleep {{ .Values.gracefulShutdownSeconds }}" ]
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: LOG_FORMAT_SRV_I
+              value: {{ include "@chartName@.name" . }}
+            - name: DEBUG_MODE
+              value: "false"
+            - name: JAVA_ARGS
+              value: {{ .Values.env.jvm_args | quote }}
+          {{- with .Values.probes }}
+          {{- toYaml . | nindent 10 -}}
+          {{- end }}
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- include "com-common-library.resources" (list $ "gateway") | nindent 10 }}

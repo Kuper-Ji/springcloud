@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "com-common-library.name" . }}
+  labels:
+  {{- include "com-common-library.standardLabels" (list $) | nindent 4 }}
+  {{- include "com-common-library.labels" (list $) | nindent 4 }}
+  annotations:
+  {{- include "com-common-library.productInformation" (list $) | nindent 4 }}
+  {{- include "com-common-library.annotations" (list $) | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- include "com-common-library.ipFamilies" . | nindent 2 }}
+  ports:
+    - name: {{ .Values.service.name }}
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  selector:
+    {{- include "com-common-library.matchLabels" $ | nindent 4 }}

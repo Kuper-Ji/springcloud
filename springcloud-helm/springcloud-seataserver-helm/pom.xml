@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.spring</groupId>
+        <artifactId>springcloud-helm</artifactId>
+        <relativePath>../../springcloud-helm/pom.xml</relativePath>
+        <version>${revision}${changelist}</version>
+    </parent>
+
+    <artifactId>com-springcloud-seataserver</artifactId>
+    <version>${revision}${changelist}</version>
+    <name>${project.groupId}:${project.artifactId}</name>
+
+    <properties>
+        <chart.appVersion>${revision}</chart.appVersion>
+        <buildDirectory>${project.basedir}/target</buildDirectory>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>${helm-maven-plugin.groupId}</groupId>
+                <artifactId>helm-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shortRevisionLength>4</shortRevisionLength>
+                    <timestampFormat>{0,date,yyMMddHHmm}</timestampFormat>
+                    <items>
+                        <item>buildNumber</item>
+                        <item>timestamp</item>
+                    </items>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

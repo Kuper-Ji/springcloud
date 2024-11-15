@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.spring</groupId>
+        <artifactId>springcloud-docker</artifactId>
+        <relativePath>../../springcloud-docker/pom.xml</relativePath>
+        <version>${revision}${changelist}</version>
+    </parent>
+
+    <artifactId>springcloud-app-docker</artifactId>
+
+    <properties>
+        <docker.image.name>com-springcloud-app</docker.image.name>
+    </properties>
+
+    <dependencies>
+        <!--        <dependency>-->
+        <!--            <groupId>com.spring</groupId>-->
+        <!--            <artifactId>springcloud-app</artifactId>-->
+        <!--            <version>${revision}${changelist}</version>-->
+        <!--            <type>jar</type>-->
+        <!--        </dependency>-->
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>build-image</id>
+            <activation>
+                <property>
+                    <name>docker.registry</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.googlecode.maven-download-plugin</groupId>
+                        <artifactId>download-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <includeArtifactIds>springcloud-app-docker</includeArtifactIds>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

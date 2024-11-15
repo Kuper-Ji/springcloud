@@ -1,0 +1,179 @@
+# Default values for @chartName@.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  pullSecret:
+  registry:
+    url: ""
+    repoPath: @docker.image.namespace@
+    initRepo: @docker.image.release.namespace@
+    imagePullPolicy: IfNotPresent
+  nodeSelector: { }
+  # Kubernetes deploy affinity rules enabler
+  affinity:
+    enabled: true
+  tolerations:
+    # Mandatory: the seconds of toleration for node.kubernetes.io/unreachable.
+    # Indicate how long the pod will remain bound to the node after node is unreachable from the node controller.
+    # This corresponds to the NodeCondition Ready being “Unknown”.
+    # default is 5
+    unreachableTolerationSeconds: 5
+    # Mandatory: the seconds of toleration for node.kubernetes.io/not-ready.
+    # Indicate how long the pod will remain bound to the node after node is not ready.
+    # This corresponds to the NodeCondition Ready being “False”.
+    # default is 5
+    notReadyTolerationSeconds: 5
+  mode: standalone
+imageCredentials:
+  pullSecret:
+  repoPath: @docker.image.namespace@
+  registry:
+    url:  # overrides global registry url.
+    imagePullPolicy: # overrides global image pull policy
+  nacos:
+    repoPath:
+    registry:
+      url: # DR-D1121-104, overrides global registry url (.Values.global.registry.url)
+      imagePullPolicy: # overrides $.Values.global.registry.imagePullPolicy="IfNotPresent"
+
+persistence:
+  enabled: false
+  data:
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: manual
+    resources:
+      requests:
+        storage: 5Gi
+
+nacos:
+  image:
+    repository: registry/dev/com-springcloud-nacos
+    tag: 1.0.0-SNAPSHOT
+    pullPolicy: IfNotPresent
+  plugin:
+    enable: true
+    image:
+      repository: nacos/nacos-peer-finder-plugin
+      tag: 1.1
+      pullPolicy: IfNotPresent
+  replicaCount: 1
+  podManagementPolicy: Parallel
+  domainName: cluster.local
+  preferhostmode: hostname
+  serverPort: 8848
+  health:
+    enabled: false
+  storage:
+    type: embedded
+#    type: mysql
+#    db:
+#      host: localhost
+#      name: nacos
+#      port: 3306
+#      username: usernmae
+#      password: password
+#      param: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false
+
+
+nameOverride: ""
+
+replicaCount: 1
+
+env:
+  jvm_args: "-Xms1024m -Xmx2048m"
+
+terminationGracePeriodSeconds: 30
+
+resources:
+  dtg:
+    requests:
+      cpu: 2
+      memory: 2Gi
+    limits:
+      cpu: 3
+      memory: 4Gi
+
+tolerations: [ ]
+
+nodeSelector: { }
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+# Mandatory:
+annotations: { }
+
+credentials:
+  ees:
+    edge:
+      ipfix:
+        cert: "ipfix-collector-dtls-client"
+        cacert: "ipfix-collector-dtls-client-cacert"
+      nbi:
+        trusted:
+          cert: "com-common-nbi-trust-client-certs"
+          cacert: "com-common-nbi-trust-client-certs-cacert"
+        non-trusted:
+          cert: "com-common-nbi-non-trust-client-certs"
+          cacert: "com-common-nbi-non-trust-client-certs-cacert"
+      sbi:
+        cert: "com-common-sbi-client-certs"
+        cacert: "com-common-sbi-client-certs-cacert"
+      prov:
+        cert: "com-common-prov-client-certs"
+        cacert: "com-common-prov-client-certs-cacert"
+    central:
+      nbi:
+        trusted:
+          cert: "com-common-nbi-trust-client-certs"
+          cacert: "com-common-nbi-trust-client-certs-cacert"
+        non-trusted:
+          cert: "com-common-nbi-non-trust-client-certs"
+          cacert: "com-common-nbi-non-trust-client-certs-cacert"
+      sbi:
+        cert: "com-common-sbi-client-certs"
+        cacert: "com-common-sbi-client-certs-cacert"
+      prov:
+        cert: "com-common-prov-client-certs"
+        cacert: "com-common-prov-client-certs-cacert"
+      ue:
+        cert: "com-common-ue-client-certs"
+        cacert: "com-common-ue-client-certs-cacert"
+
+kubeConfig:
+  secretName: com-aat-ees-kubeconfig
+  secretKey: config
+
+service:
+  type: ClusterIP
+  name: http
+  port: 8848
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /nacos/v1/console/health/liveness
+      port: 8848
+      scheme: HTTP
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 6
+  readinessProbe:
+    httpGet:
+      path: /nacos/v1/console/health/readiness
+      port: 8848
+      scheme: HTTP
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+
+gracefulShutdownSeconds: 20

@@ -1,0 +1,14 @@
+seata:
+  application-id: springboot-feign-seata-account
+  tx-service-group: default_tx_group
+  data-source-proxy-mode: AT
+server:
+  port: 8083
+spring:
+  application:
+    name: springboot-feign-seata-account
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    password: ${mysql.password:rootroot}
+    url: jdbc:mysql://${mysql.address:127.0.0.1}:31497/seata?useSSL=false&useUnicode=true&characterEncoding=UTF8
+    username: ${mysql.user:root}

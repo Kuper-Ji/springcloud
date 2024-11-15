@@ -1,0 +1,8 @@
+apiVersion: v2
+name: @chartName@
+version: @chartVersion@
+appVersion: @chart.appVersion@
+type: application
+annotations:
+  created: @buildDate@
+  revision: @buildNumber@

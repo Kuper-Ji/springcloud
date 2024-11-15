@@ -1,0 +1,1 @@
+{{- include "com-common-library.roleBinding" (list $) -}}

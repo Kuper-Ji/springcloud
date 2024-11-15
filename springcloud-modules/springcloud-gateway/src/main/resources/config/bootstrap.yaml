@@ -1,0 +1,14 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: microServiceCloudGateway #服务名
+  cloud:
+    nacos:
+      discovery:
+        server-addr: com-springcloud-nacos:8848 #Nacos服务注册中心地址
+      config:
+        server-addr: com-springcloud-nacos:8848 #Nacos作为配置中心地址
+        file-extension: yaml #指定yaml格式的配置
+  config:
+    import: nacos:${spring.application.name}-${spring.profiles.active}.yaml
