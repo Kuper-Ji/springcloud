@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableFeignClients
-@EnableAutoDataSourceProxy
+@EnableAutoDataSourceProxy(dataSourceProxyMode = "XA")
 public class SpringbootFeignSeataBusinessApplication  {
 
     public static void main(String[] args) {

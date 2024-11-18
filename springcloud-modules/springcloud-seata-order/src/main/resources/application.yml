@@ -1,7 +1,6 @@
 seata:
   application-id: springboot-feign-seata-order
   tx-service-group: default_tx_group
-  data-source-proxy-mode: AT
 server:
   port: 8082
 spring:
